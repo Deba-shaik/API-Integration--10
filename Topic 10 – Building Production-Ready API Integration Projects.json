@@ -1,0 +1,319 @@
+{
+  "name": "Topic 10 – Building Production-Ready API Integration Projects",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        -112
+      ],
+      "id": "a9fef040-2e03-4104-9cc0-9a0b18d70137",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8c4e3ea6-3f59-4d2e-90ff-8085cfa5b7ec",
+              "name": "endpoint",
+              "value": "=https://reqres.in/api",
+              "type": "string"
+            },
+            {
+              "id": "ca24dc9f-9abc-4d1a-be3c-ce51be7a5e1a",
+              "name": "env",
+              "value": "=development",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -176,
+        -112
+      ],
+      "id": "f7c69c49-227f-43f3-b723-aa5ae99054f5",
+      "name": "Load Config"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -400,
+        160
+      ],
+      "id": "4cba4fce-9e0d-4597-9902-19905a2a16ed",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://jsonplaceholder.typicode.com/users/2",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -176,
+        160
+      ],
+      "id": "3b15ac04-711d-4d87-969e-c52fbcfe51ab",
+      "name": "Ping API Endpoint",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e3fd62aa-e343-47b2-a14e-a4e29322fa94",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        64,
+        16
+      ],
+      "id": "d512e0ae-e262-44db-b55c-d1bdfa04e325",
+      "name": "Check API Status"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        336,
+        -64
+      ],
+      "id": "b9023ca3-1df9-42ef-804b-53a2ff3a0665",
+      "name": "API Healthy"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://postman-echo.com/post",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "=\n{{ JSON.stringify({\n  alert: \"CRITICAL DOWNTIME DETECTED\",\n  endpoint: \"JSONPlaceholder API\",\n  statusCode: $json.error?.statusCode ?? $json.statusCode ?? 0,\n  errorMessage: $json.error?.message ?? $json.message ?? \"API health check failed\",\n  timestamp: $now.toISO()\n}) }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        368,
+        160
+      ],
+      "id": "35a75480-5747-423d-9bf9-449cdfa5a2a2",
+      "name": "Send Downtime Alert"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "production-api-security",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -416,
+        368
+      ],
+      "id": "be2870a6-8403-4da8-a439-34523d9a72be",
+      "name": "Secure Production Webhook",
+      "webhookId": "f0a31e0d-80ae-4e58-9b2a-1545f9ead5f0",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AGCAKeauO2G0jBre",
+          "name": "Header Auth account 8"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "111d32d6-6323-4965-a703-a21fd7b94179",
+              "name": "status",
+              "value": "accepted",
+              "type": "string"
+            },
+            {
+              "id": "113c38dc-8dca-492f-b72a-8798db84eaf4",
+              "name": "message",
+              "value": "Authenticated webhook received",
+              "type": "string"
+            },
+            {
+              "id": "beecfcb5-49e5-4c76-9efb-bbd1eb478fd8",
+              "name": "environment",
+              "value": "development",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -192,
+        368
+      ],
+      "id": "ec033878-5c73-4203-8d41-24b903b3ac2d",
+      "name": "Webhook Accepted"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "=\n{{ JSON.stringify($json) }}\n",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        32,
+        368
+      ],
+      "id": "7cc42987-fa5c-4b95-b4e5-5b35582d84a8",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Load Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Ping API Endpoint",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ping API Endpoint": {
+      "main": [
+        [
+          {
+            "node": "Check API Status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Downtime Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check API Status": {
+      "main": [
+        [
+          {
+            "node": "API Healthy",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Downtime Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Secure Production Webhook": {
+      "main": [
+        [
+          {
+            "node": "Webhook Accepted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Accepted": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "d7fdebbd-df2a-49fe-96ab-4438c2cb6618",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a03c7678428ef19ededbf912f16f7d5798ec7b9ab4c17f2a2def6a9e791e7215"
+  },
+  "nodeGroups": [],
+  "id": "qlX5bToW9horXzN1",
+  "tags": []
+}
